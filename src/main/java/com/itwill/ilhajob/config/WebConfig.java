@@ -43,6 +43,9 @@ public class WebConfig implements WebMvcConfigurer{
     
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
+    	String os = System.getProperty("os.name").toLowerCase();
+        String projectPath = System.getProperty("user.dir");
+    	
         registry.addResourceHandler("/upload/logo/**")
             .addResourceLocations("file:C://final-project-team1-ilhajob//upload//logo//")
             .setCachePeriod(0);
@@ -52,5 +55,19 @@ public class WebConfig implements WebMvcConfigurer{
         registry.addResourceHandler("/upload/blog/**")
 	        .addResourceLocations("file:C://final-project-team1-ilhajob//upload//blog//")
 	        .setCachePeriod(0);
+        
+        // Mac 경로
+        if (os.contains("mac")) {
+            registry.addResourceHandler("/upload/logo/**")
+                .addResourceLocations("file:" + projectPath + "/upload/logo/")
+                .setCachePeriod(0);
+            registry.addResourceHandler("/upload/profile/**")
+            	.addResourceLocations("file:" + projectPath + "/upload/profile/")
+                .setCachePeriod(0);
+            registry.addResourceHandler("/upload/blog/**")
+	            .addResourceLocations("file:" + projectPath + "/upload/blog/")
+                .setCachePeriod(0);
+        }
+        
     }
 }

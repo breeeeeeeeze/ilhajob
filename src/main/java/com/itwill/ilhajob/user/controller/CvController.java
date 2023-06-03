@@ -1,5 +1,6 @@
 package com.itwill.ilhajob.user.controller;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -231,6 +232,37 @@ public class CvController {
 		CvDto cv = cvService.findCvById(Long.valueOf((Integer)requestData.get("id")));
 		UserDto user = userService.findUser((String)request.getSession().getAttribute("sUserId"));
 		
+		// 운영체제 확인
+		String os = System.getProperty("os.name").toLowerCase();
+
+		// 현재 실행중인 프로젝트의 경로
+		String projectPath = System.getProperty("user.dir");
+	    
+		// 운영체제 구분
+		if(os.contains("mac")) {
+			String uploadDirectory = projectPath + "/upload/cv/";
+			
+	        // 업로드 폴더 생성
+		    File uploadFolder = new File(uploadDirectory);
+		    if (!uploadFolder.exists()) {
+		        uploadFolder.mkdirs();
+		    }
+			String saveFileName = uploadDirectory + recruit.getId()+"_rc" + cv.getId() + "_cv" + user.getId() + "_user" + ".json";
+			try {
+				AppDto app = new AppDto(0, 0, LocalDateTime.now(), saveFileName, recruit, cv, user);
+				//pathMap.get("urlPath") + saveFileName;
+				appService.insertApp(app);
+				//json파일 폴더에 저장
+				ObjectMapper mapper = new ObjectMapper();
+		        String json = mapper.writeValueAsString(requestData);
+		        Path filePath = Paths.get(saveFileName);
+		        Files.write(filePath, json.getBytes());
+		        request.getSession().setAttribute("msgList", (Integer)request.getSession().getAttribute("msgList") + 1);
+			}catch (Exception e) {
+				return "이력서 지원 실패";
+			}
+			return "이력서 지원 완료";
+		} else {
 		Map<String, String> pathMap = ImageController.makeDir("cv");
 		String saveFileName = pathMap.get("absolutePath")+recruit.getId()+"_rc"+cv.getId()+"_cv"+user.getId()+"_user"+".json";
 		try {
@@ -248,6 +280,7 @@ public class CvController {
 			return "이력서 지원 실패";
 		}
 		return "이력서 지원 완료";
+		}
 	}
 	
 	/* 테스트 중 임의로 cvId 저장해 둠 */

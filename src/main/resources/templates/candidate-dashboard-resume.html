@@ -154,7 +154,7 @@
                       <div class="form-group col-lg-6 col-md-12">
 					  <label>이력서 선택</label>
 					  <select class="chosen-select" onchange="changeCv()">
-					    <option th:text="*{cvName}" th:value="*{id}">My CV</option> <!-- 선택된 이력서 제목 -->
+					    <option th:value="*{id}">--- 선택 ---</option>
 					    <option th:each="cv:${cvList}" th:id="'cvId('+${cv.id}+')'" th:text="${cv.cvName}" th:value="${cv.id}">My CV</option>
 					  </select>
 					  <input type="hidden" name="cvId" id="cvId" value="">

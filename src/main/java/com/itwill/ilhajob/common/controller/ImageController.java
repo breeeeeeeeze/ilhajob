@@ -11,27 +11,16 @@ import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
-
-import org.hibernate.internal.build.AllowSysOut;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.itwill.ilhajob.common.controller.ResponseStatusCode;
 import com.itwill.ilhajob.common.dto.BlogDto;
 import com.itwill.ilhajob.common.service.BlogService;
 import com.itwill.ilhajob.corp.dto.CorpDto;
-import com.itwill.ilhajob.corp.dto.CorpImageDto;
-import com.itwill.ilhajob.corp.service.CorpImageService;
 import com.itwill.ilhajob.corp.service.CorpService;
 import com.itwill.ilhajob.user.dto.UserDto;
 import com.itwill.ilhajob.user.service.UserService;
@@ -60,6 +49,50 @@ public class ImageController {
 		String sUserId = (String)request.getSession().getAttribute("sUserId");
 		UserDto loginUser = userService.findUser(sUserId);
 		
+		// 운영체제 확인
+	    String os = System.getProperty("os.name").toLowerCase();
+
+	    // 현재 실행중인 프로젝트의 경로
+	    String projectPath = System.getProperty("user.dir");
+
+	    // 운영체제 구분
+	    if (os.contains("mac")) {
+	        // macOS 업로드 경로
+	    	String uploadDirectory = projectPath + "/upload/blog/";
+	        
+	        // 업로드 폴더 생성
+		    File uploadFolder = new File(uploadDirectory);
+		    if (!uploadFolder.exists()) {
+		        uploadFolder.mkdirs();
+		    }
+
+		    // MultipartFile 배열로 받은 파일을 처리하는 로직
+		    for (MultipartFile image : images) {
+		        if (!image.isEmpty()) {
+		            String fileName = image.getOriginalFilename();
+		            String saveFileName = loginUser.getId() + "_profile" + fileName.substring(fileName.lastIndexOf("."));
+		            // 파일 저장 로직
+		            try {
+		            	byte[] bytes = image.getBytes();
+		                Path path = Paths.get(uploadDirectory + saveFileName);
+		                Files.write(path, bytes);
+		                
+		                String pattern = uploadDirectory.substring(uploadDirectory.indexOf("upload"));
+		                System.out.println(pattern);
+		                
+		                blog.setBlogImage(pattern + saveFileName);
+		                System.out.println("이미지 업데이트후 blogDto>>>"+blog);
+		                blogService.updateBlog(blog.getId(), blog);
+		                
+		            } catch (IOException e) {
+		                return "이미지 업로드 실패...";
+		            }
+		        }
+		    }
+		    return "이미지 업로드 완료";
+	        
+	    } else {
+		
 		Map<String, String> pathMap = makeDir("blog");
 		// MultipartFile 배열로 받은 파일을 처리하는 로직
 	    for (MultipartFile image : images) {
@@ -80,6 +113,7 @@ public class ImageController {
 	        }
 	    }
 	    return "이미지 업로드 완료";
+	    }
 	}
 	
 	// 유저프로필 업로드
@@ -89,6 +123,49 @@ public class ImageController {
 		String sUserId = (String)request.getSession().getAttribute("sUserId");
 		UserDto loginUser = userService.findUser(sUserId);
 		
+		// 운영체제 확인
+	    String os = System.getProperty("os.name").toLowerCase();
+
+	    // 현재 실행중인 프로젝트의 경로
+	    String projectPath = System.getProperty("user.dir");
+
+	    // 운영체제 구분
+	    if (os.contains("mac")) {
+	        // macOS 업로드 경로
+	    	String uploadDirectory = projectPath + "/upload/profile/";
+	        
+	        // 업로드 폴더 생성
+		    File uploadFolder = new File(uploadDirectory);
+		    if (!uploadFolder.exists()) {
+		        uploadFolder.mkdirs();
+		    }
+
+		    // MultipartFile 배열로 받은 파일을 처리하는 로직
+		    for (MultipartFile image : images) {
+		        if (!image.isEmpty()) {
+		            String fileName = image.getOriginalFilename();
+		            String saveFileName = loginUser.getId() + "_profile" + fileName.substring(fileName.lastIndexOf("."));
+		            // 파일 저장 로직
+		            try {
+		                byte[] bytes = image.getBytes();
+		                Path path = Paths.get(uploadDirectory + saveFileName);
+		                Files.write(path, bytes);
+		                
+		                String pattern = uploadDirectory.substring(uploadDirectory.indexOf("upload"));
+		                System.out.println(pattern);
+		                
+		                loginUser.setUserImage(pattern + saveFileName);
+		                userService.update(loginUser.getId(), loginUser);
+		                request.getSession().setAttribute("profileAvatar", loginUser.getUserImage());
+		                System.out.println("업로드 성공????????" + request.getSession().getAttribute("profileAvatar"));
+		            } catch (IOException e) {
+		                return "이미지 업로드 실패...";
+		            }
+		        }
+		    }
+		    return "이미지 업로드 완료";
+	        
+	    } else {
 		//절대경로 profile은 config에서 경로등록
 		Map<String, String> pathMap = makeDir("profile");
 		
@@ -113,8 +190,9 @@ public class ImageController {
 	        }
 	    }
 	    return "이미지 업로드 완료";
+	    }
 	}
-		
+	
 	// 기업로고 업로드
 	@ResponseBody
 	@PostMapping(value = "/corp-logo-upload-action")
@@ -122,6 +200,50 @@ public class ImageController {
 		Long sCorpId =(Long)request.getSession().getAttribute("id");
 		CorpDto corp=corpService.findByCorpId(sCorpId);
 		
+		// 운영체제 확인
+		String os = System.getProperty("os.name").toLowerCase();
+
+		// 현재 실행중인 프로젝트의 경로
+		String projectPath = System.getProperty("user.dir");
+	    
+		// 운영체제 구분
+		if(os.contains("mac")) {
+			
+			// macOS 업로드 경로
+			String uploadDirectory = projectPath + "/upload/logo/";
+	        
+	        // 업로드 폴더 생성
+		    File uploadFolder = new File(uploadDirectory);
+		    if (!uploadFolder.exists()) {
+		        uploadFolder.mkdirs();
+		    }
+
+		    // MultipartFile 배열로 받은 파일을 처리하는 로직
+		    for (MultipartFile image : images) {
+		        if (!image.isEmpty()) {
+		            String fileName = image.getOriginalFilename();
+		            String saveFileName = corp.getId() + "_profile" + fileName.substring(fileName.lastIndexOf("."));
+		            // 파일 저장 로직
+		            try {
+		                byte[] bytes = image.getBytes();
+		                Path path = Paths.get(uploadDirectory + saveFileName);
+		                Files.write(path, bytes);
+		                
+		                String pattern = uploadDirectory.substring(uploadDirectory.indexOf("upload"));
+		                System.out.println(pattern);
+		                
+		                corp.setCorpStoredFileName(pattern + saveFileName);
+		                corpService.update(corp.getId(), corp);
+		                request.getSession().setAttribute("profileAvatar", corp.getCorpStoredFileName());
+		                System.out.println("corp logo************ : " + request.getSession().getAttribute("profileAvatar"));
+		            } catch (IOException e) {
+		                return "이미지 업로드 실패...";
+		            }
+		        }
+		    }
+		    return "이미지 업로드 완료";
+			
+		} else {
 		//절대경로 logo은 config에서 경로등록
 		Map<String, String> pathMap = makeDir("logo");
 		
@@ -146,6 +268,7 @@ public class ImageController {
 	        }
 	    }
 	    return "이미지 업로드 완료";
+		}
 	}
 	
 	//폴더메이킹
