@@ -74,16 +74,7 @@ public class EduRestController {
 		}
 		return "/candidate-dashboard-resume :: #edu-block";
 	}
-
-	@RequestMapping(value = "/edu", produces = "application/json;charset=UTF-8")
-	public Map<String, Object> addEdu(@RequestBody EduDto eduDto) {
-		Map<String, Object> resultMap = new HashMap<String, Object>();
-		EduDto edu = eduService.createEdu(eduDto);
-		List<EduDto> eduList = eduService.findEduListByUserId(edu.getUser().getId());
-		resultMap.put("eduList", eduList);
-		return resultMap;
-	}
-
+	
 	@DeleteMapping(value = "/edu/{eduId}")
 	public String deleteEdu(HttpServletRequest request, @PathVariable(value = "eduId") String eduId,
 			RedirectAttributes redirectAttributes, Model model) {
