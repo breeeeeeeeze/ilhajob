@@ -11,8 +11,8 @@ function addExp() {
   newEduBlock.innerHTML = `
   <div class="resume-block">
   <input type="hidden" name="expId">
-    <div class="inner">
-      <span class="name">S</span>
+    <div class="inner" id="newExpInner">
+      <span class="name">X</span>
       <div class="title-box">
           <div class="col-lg-11 col-md-11"></div>
           <div class="edit-btns form-group col-lg-1 col-md-1">
@@ -56,15 +56,20 @@ function addExp() {
   console.log(">>>>>>>>>> 추가영역 생성 성공 " + expList);
   var lastEduBlock = expList.lastElementChild;
   expList.insertBefore(newEduBlock, lastEduBlock.nextSibling);
+  
+  let rect = document.getElementById("newExpInner").getBoundingClientRect();
+  window.scrollBy(0, rect.top - 110);
 }
 
 // createExp() : 새로운 경력을 추가
 function createExp() {
-  let expCorpName = $('#expCorpName').val();
-  let expPosition = $('#expPosition').val();
-  let expContent = $('#expContent').val();
-  let expStartDate = $('#expStartDate').val();
-  let expEndDate = $('#expEndDate').val();
+  let sendData = {
+  expCorpName : $('#expCorpName').val(),
+  expPosition : $('#expPosition').val(),
+  expContent : $('#expContent').val(),
+  expStartDate : $('#expStartDate').val(),
+  expEndDate : $('#expEndDate').val()
+  }
   
   if(expCorpName == "") {
   alert("회사명을 입력하세요.");
@@ -92,11 +97,23 @@ function createExp() {
   return false;
   }
   
-  document.expForm.action = "exp-create";
-  document.expForm.method = "POST";
-  document.expForm.submit();
-  console.log(">>>>>>>> exp create success");
-}
+  $.ajax({
+	url : "exp",
+	type: "POST",
+	data : sendData,
+	success : function(response) {
+		console.log("success");
+	},
+	error : function(xhr, status, error) {
+		console.log("에러 발생: " + error);
+	    console.log("상태 코드: " + xhr.status);
+	    console.log("에러 메시지: " + xhr.responseText);
+	}
+	}).done(function(fragment) {
+		// controller로 부터 받아온 fragment로 교체
+		$('#exp-block').replaceWith(fragment);	
+	});
+  }
 
 function editExp(expId) {
     $('#expId'+expId).val(expId);
@@ -109,54 +126,81 @@ function editExp(expId) {
 }
 
 function updateExp(expId) {
-  console.log(">>> updateExp(expId) : " + expId);
-  $('#expId'+expId).val(expId);
-  console.log($('#expId'+expId).attr('value'));
-  
-    let expCorpName = $('#expCorpName'+expId).val();
-  let expPosition = $('#expPosition'+expId).val();
-  let expContent = $('#expContent'+expId).val();
-  let expStartDate = $('#expStartDate'+expId).val();
-  let expEndDate = $('#expEndDate'+expId).val();
-  
-  if(expCorpName == "") {
-  alert("회사명을 입력하세요.");
-  $('#expCorpName'+expId).focus()
-  return false;
-  }
-  if(expPosition == "") {
-  alert("직무를 입력하세요.");
-  $('#expPosition'+expId).focus();
-  return false;
-  }
-  if(expContent == "") {
-  alert("경력관련 상세정보를 입력하세요.");
-  $('#expContent'+expId).focus();
-  return false;
-  }
-  if(expStartDate == "") {
-  alert("경력 시작일을 입력하세요.");
-  $('#expStartDate'+expId).focus();
-  return false;
-  }
-  if(expEndDate == "") {
-  alert("경력 종료일을 입력하세요.");
-  $('#expEndDate'+expId).focus();
-  return false;
-  }
-  
-  document.expForm.action = "exp-update";
-  document.expForm.method = "POST";
-  document.expForm.submit();
+	let expCorpName = $('#expCorpName' + expId).val();
+	let expPosition = $('#expPosition' + expId).val();
+	let expContent = $('#expContent' + expId).val();
+	let expStartDate = $('#expStartDate' + expId).val();
+	let expEndDate = $('#expEndDate' + expId).val();
+
+	if (expCorpName == "") {
+		alert("회사명을 입력하세요.");
+		$('#expCorpName' + expId).focus()
+		return false;
+	}
+	if (expPosition == "") {
+		alert("직무를 입력하세요.");
+		$('#expPosition' + expId).focus();
+		return false;
+	}
+	if (expContent == "") {
+		alert("경력관련 상세정보를 입력하세요.");
+		$('#expContent' + expId).focus();
+		return false;
+	}
+	if (expStartDate == "") {
+		alert("경력 시작일을 입력하세요.");
+		$('#expStartDate' + expId).focus();
+		return false;
+	}
+	if (expEndDate == "") {
+		alert("경력 종료일을 입력하세요.");
+		$('#expEndDate' + expId).focus();
+		return false;
+	}
+
+	$.ajax({
+		url: "exp/" + expId,
+		type: "PUT",
+		data: {
+			expCorpName: expCorpName,
+			expPosition: expPosition,
+			expContent: expContent,
+			expStartDate: expStartDate,
+			expEndDate: expEndDate,
+			expId: expId
+		},
+		success: function(response) {
+			console.log("success");
+		},
+		error: function(xhr, status, error) {
+		console.log("에러 발생: " + error);
+	    console.log("상태 코드: " + xhr.status);
+	    console.log("에러 메시지: " + xhr.responseText);
+		}
+	}).done(function(fragment) {
+		$('#exp-block').replaceWith(fragment);
+	});
 }
 
 function deleteExp(expId) {
-  console.log(">>> deleteExp(expId) : " + expId);
-  $('#expId'+expId).val(expId);
-  console.log($('#expId'+expId).attr('value'));
-  document.expForm.action = "exp-delete";
-  document.expForm.method = "POST";
-  document.expForm.submit();
-  console.log(">>>>>>>> exp delete success");
+	console.log(">>> deleteExp(expId) : " + expId);
+	$('#expId' + expId).val(expId);
+	console.log($('#expId' + expId).attr('value'));
+
+	$.ajax({
+		url: "exp/" + expId,
+		type: "DELETE",
+		data: $('.default-form').serialize(),
+		success : function(response) {
+		console.log("success");
+		},
+		error : function(xhr, status, error) {
+		console.log("에러 발생: " + error);
+	    console.log("상태 코드: " + xhr.status);
+	    console.log("에러 메시지: " + xhr.responseText);
+		}
+}).done(function (fragment) {
+	$('#exp-block').replaceWith(fragment);
+});
 }
 

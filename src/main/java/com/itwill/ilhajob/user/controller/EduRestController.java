@@ -95,7 +95,7 @@ public class EduRestController {
 		return "/candidate-dashboard-resume :: #edu-block";
 	}
 
-	@PutMapping(value = "edu-update")
+	@PutMapping(value = "edu/{eduId}")
 	public String updateEdu(@RequestParam(name = "eduId") String eduId,
 			@RequestParam(name = "eduStartDate") List<String> eduStartDateList,
 			@RequestParam(name = "eduEndDate") List<String> eduEndDateList,

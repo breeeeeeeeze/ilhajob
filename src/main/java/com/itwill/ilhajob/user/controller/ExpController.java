@@ -3,12 +3,16 @@ package com.itwill.ilhajob.user.controller;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -25,7 +29,7 @@ public class ExpController {
 	@Autowired
 	private UserService userService;
 	
-	@PostMapping(value = "/exp-create")
+	@PostMapping(value = "/exp")
 	public String createExp(
 			HttpServletRequest request, 
 			@RequestParam(name="expCorpName") String expCorpName,
@@ -33,8 +37,7 @@ public class ExpController {
 			@RequestParam(name="expContent") String expContent,
 			@RequestParam(name="expStartDate") String expStartDate,
 			@RequestParam(name="expEndDate") String expEndDate,
-			@RequestParam(name="cvId") String cvId,
-			RedirectAttributes redirectAttributes
+			Model model
 			) throws Exception {
 		
 		String userId = (String)request.getSession().getAttribute("sUserId");
@@ -60,11 +63,14 @@ public class ExpController {
 		expDto.setUser(user);
 		
 		expService.createExp(expDto);
-		redirectAttributes.addAttribute("cvId", cvId);
-		return "redirect:cv-detail";
+		
+		List<ExpDto> expList = expService.findExpListByUserId(user.getId());
+		model.addAttribute("expList", expList);
+		
+		return "/candidate-dashboard-resume :: #exp-block";
 	}
 	
-	@PostMapping(value = "/exp-update")
+	@PutMapping(value = "/exp/{expId}")
 	public String updateExp(
 			@RequestParam(name="expId") String id,
 			@RequestParam(name="expCorpName") String expCorpName,
@@ -72,7 +78,7 @@ public class ExpController {
 			@RequestParam(name="expContent") String expContent,
 			@RequestParam(name="expStartDate") String expStartDate,
 			@RequestParam(name="expEndDate") String expEndDate,
-			@RequestParam String cvId , RedirectAttributes redirectAttributes) {
+			HttpServletRequest request, Model model) throws Exception{
 		ExpDto expDto = new ExpDto();
 		
 		Long expId = Long.parseLong(id.replaceAll(",", ""));
@@ -96,15 +102,24 @@ public class ExpController {
 		expDto.setExpStartDate(startDateTime);
 		expDto.setExpEndDate(endDateTime);
 		expService.updateExp(expId, expDto);
-		redirectAttributes.addAttribute("cvId", cvId);
-		return "redirect:cv-detail";
+		
+		String userId = (String)request.getSession().getAttribute("sUserId");
+		UserDto user = userService.findUser(userId);
+		List<ExpDto> expList = expService.findExpListByUserId(user.getId());
+		model.addAttribute("expList", expList);
+		
+		return "candidate-dashboard-resume :: #exp-block";
 	}
 	
-	@PostMapping(value = "/exp-delete")
-	public String deleteExp(@RequestParam(name = "expId") String id, @RequestParam String cvId, RedirectAttributes redirectAttributes) {
+	@DeleteMapping(value = "/exp/{expId}")
+	public String deleteExp(@RequestParam(name = "expId") String id, HttpServletRequest request, Model model) throws Exception {
 		Long expId = Long.parseLong(id.replace(",", ""));
 		expService.removeById(expId);
-		redirectAttributes.addAttribute("cvId", cvId);
-		return "redirect:cv-detail";
+		
+		String userId = (String)request.getSession().getAttribute("sUserId");
+		UserDto user = userService.findUser(userId);
+		List<ExpDto> expList = expService.findExpListByUserId(user.getId());
+		model.addAttribute("expList", expList);
+		return "candidate-dashboard-resume :: #exp-block";
 	}
 }

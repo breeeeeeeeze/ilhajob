@@ -7,10 +7,11 @@ function addEdu() {
   // 새로운 요소를 생성하고 클래스 이름을 추가
   var newEduBlock = document.createElement("div");
   newEduBlock.classList.add("edu-block");
+  
   // 새로운 요소의 내부 HTML을 설정
   newEduBlock.innerHTML = `
-  <div class="resume-block"">
-	  <div class="inner">
+  <div class="resume-block">
+	  <div class="inner" id="newEduInner">
 	  <span class="name">E</span>
 	  	<div class="title-box">
 	  		  <div class="col-lg-11 col-md-11"></div>
@@ -51,15 +52,22 @@ function addEdu() {
     </div>
   `;
 
-  var eduList = document.getElementById("edu-block");
+  let eduList = document.getElementById("edu-block");
   console.log(">>>>>>>>>> 추가영역 생성 " + eduList);
-  var lastEduBlock = eduList.lastElementChild;
+  let lastEduBlock = eduList.lastElementChild;
   eduList.insertBefore(newEduBlock, lastEduBlock.nextSibling);
+  
+  let newEduInner = document.getElementById("newEduInner");
+  // 스크롤 이동을 위해 현재 시간 기준 고유 id 생성
+  newEduInner.id = "newEduInner-" + Date.now(); // 현재 시간을 기반으로 고유한 ID 생성
+
+  // 스크롤 이동
+  let rect = newEduInner.getBoundingClientRect();
+  window.scrollBy(0, rect.top - 110);
 }
 
 // deleteEdu() : 학력 삭제
 function deleteEdu(eduId) {
-	//confirm(">>>>>>> eduId : " + eduId + "typeof : " + typeof eduId);
 	$('#eduId'+eduId).val(eduId);
 	console.log($('#eduId'+eduId).attr('value'));
 	
@@ -68,29 +76,27 @@ function deleteEdu(eduId) {
     	type: "DELETE",
     	data: $('.default-form').serialize(),
     	success: function(response) {
-      	console.log(response);
-      	//alert("success");
-      	location.reload();
    	 },
     	error: function(xhr, status, error) {
-     	console.log(error);
-      	//alert("fail");
+     	console.log(xhr);
+     	console.log(xhr.error);
     }
-  });
+  }).done(function(fragment) {
+		// contorller로 부터 받아온 fragment로 교체
+		$('#edu-block').replaceWith(fragment);
+	});
 }
 
 // createEdu() : 새로운 학력을 추가
 function createEdu() {
-    let eduName = $('#eduName').val();
-    let eduMajor = $('#eduMajor').val();
-    let eduScore = $('#eduScore').val();
-    let eduContent = $('#eduContent').val();
-    let eduStartDate = $('#eduStartDate').val();
-    let eduEndDate = $('#eduEndDate').val();
-    var cvId = document.querySelector('.chosen-select').value;
-    document.querySelector('#cvId').value = cvId;
-    let pattern = /^(?:4(?:\.[0-4]?[0-9]?)?|[0-3](?:\.[0-9]{1,2})?|0?\.[0-9]{1,2})$/;
-    
+	let eduName = $('#eduName').val();
+	let eduMajor = $('#eduMajor').val();
+	let eduScore = $('#eduScore').val();
+	let eduContent = $('#eduContent').val();
+	let eduStartDate = $('#eduStartDate').val();
+	let eduEndDate = $('#eduEndDate').val();
+	let pattern = /^(?:4(?:\.[0-4]?[0-9]?)?|[0-3](?:\.[0-9]{1,2})?|0?\.[0-9]{1,2})$/;
+
 	if (eduName == "") {
 		alert("학교를 입력하세요.");
 		$('#eduName').focus();
@@ -127,27 +133,29 @@ function createEdu() {
 		return false;
 	}
 
-  $.ajax({
-    url: "edu",
-    type: "POST",
-    data: {
-      eduName: eduName,
-      eduMajor: eduMajor,
-      eduScore: eduScore,
-      eduContent: eduContent,
-      eduStartDate: eduStartDate,
-      eduEndDate: eduEndDate,
-      id : cvId
-    },
-    success: function(response) {
-      //alert("success");
-      location.reload();
-    },
-    error: function(xhr, status, error) {
-      //alert("fail");
-      console.log("fail");
-    }
-  });
+	$.ajax({
+		url: "edu",
+		type: "POST",
+		data: {
+			eduName: eduName,
+			eduMajor: eduMajor,
+			eduScore: eduScore,
+			eduContent: eduContent,
+			eduStartDate: eduStartDate,
+			eduEndDate: eduEndDate,
+		},
+		success: function(response) {
+			console.log("success");
+		},
+		error: function(xhr, status, error) {
+			console.log("에러 발생: " + error);
+		    console.log("상태 코드: " + xhr.status);
+		    console.log("에러 메시지: " + xhr.responseText);
+		}
+	}).done(function(fragment) {
+		// contorller로 부터 받아온 fragment로 교체
+		$('#edu-block').replaceWith(fragment);
+	});
 }
 
 // editEdu() : 학력을 수정하기 위해 input 태그로 변경
@@ -169,9 +177,10 @@ function updateEdu(eduId) {
 	let eduContent = $("#eduContent" + eduId).val();
 	let eduStartDate = $("#eduStartDate" + eduId).val();
 	let eduEndDate = $("#eduEndDate" + eduId).val();
-    let cvId = $('.chosen-select').val();
     let pattern = /^(?:4(?:\.[0-4]?[0-9]?)?|[0-3](?:\.[0-9]{1,2})?|0?\.[0-9]{1,2})$/;
-
+	
+	/*
+	전달할 값 체크
 	console.log(">>>>> eduId : " + eduId);
     console.log(">>>>> eduName : " + eduName);
     console.log(">>>>> eduMajor : " + eduMajor);
@@ -179,6 +188,7 @@ function updateEdu(eduId) {
     console.log(">>>>> eduContent : " + eduContent);
     console.log(">>>>> eduStartDate : " + eduStartDate);
     console.log(">>>>> eduEndDate : " + eduEndDate);
+    */
     
 	if (eduName == "") {
 	alert("학교를 입력하세요.");
@@ -217,7 +227,7 @@ function updateEdu(eduId) {
 	}
     
     $.ajax({
-    url: "edu-update",
+    url: "edu/" + eduId,
     type: "PUT",
     data: {
 	  eduId : eduId,
@@ -227,15 +237,15 @@ function updateEdu(eduId) {
       eduContent: eduContent,
       eduStartDate: eduStartDate,
       eduEndDate: eduEndDate,
-      id : cvId
     },
     success: function(response) {
-      //alert("success");
-      location.reload();
+      console.log("success")
     },
     error: function(xhr, status, error) {
-      //alert("fail");
       console.log("fail");
     }
-  });
+  }).done(function(fragment) {
+		// contorller로 부터 받아온 fragment로 교체
+		$('#edu-block').replaceWith(fragment);
+	});
 }
